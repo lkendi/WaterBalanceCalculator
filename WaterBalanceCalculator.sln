@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaterBalanceCalculator", "WaterBalanceCalculator.csproj", "{D739783D-A2EB-FACD-A587-51A37D8E38E7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaterBalanceCalculator", "src/WaterBalanceCalculator.csproj", "{D739783D-A2EB-FACD-A587-51A37D8E38E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -3,7 +3,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using WaterBalanceCalculator.Models;
 using WaterBalanceCalculator.Services;
-
 namespace WaterBalanceCalculator;
 
 public partial class MainWindow : Window
@@ -13,8 +12,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         CalculateButton.Click += OnCalculateClicked;
         ClearButton.Click += OnClearClicked;
-        
-        // Ensure window starts maximized and centered
+
         WindowState = WindowState.Maximized;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
@@ -22,7 +20,7 @@ public partial class MainWindow : Window
     private void OnCalculateClicked(object? sender, RoutedEventArgs e)
     {
         var sample = ParseInputs();
-        
+
         var validation = WaterSampleValidator.ValidateForCalculation(sample);
         if (!validation.IsValid)
         {
@@ -37,8 +35,8 @@ public partial class MainWindow : Window
 
     private WaterSample ParseInputs()
     {
-        double? ParseBox(TextBox box) => 
-            string.IsNullOrWhiteSpace(box.Text) ? null : 
+        double? ParseBox(TextBox box) =>
+            string.IsNullOrWhiteSpace(box.Text) ? null :
             double.TryParse(box.Text, out var val) ? val : null;
 
         return new WaterSample
@@ -64,7 +62,7 @@ public partial class MainWindow : Window
         SolvedValueText.Text = "";
         CationsSumText.Text = "";
         AnionsSumText.Text = "";
-        
+
         StatusBorder.Background = Brush.Parse("#fef2f2");
         StatusBorder.BorderBrush = Brush.Parse("#fecaca");
         StatusIndicator.Background = Brush.Parse("#ef4444");
@@ -102,14 +100,14 @@ public partial class MainWindow : Window
         SulfateBox.Text = "";
         AlkalinityBox.Text = "";
         ConductivityBox.Text = "";
-        
+
         StatusText.Text = "Enter values and calculate";
         SolvedPropertyText.Text = "";
         SolvedValueText.Text = "";
         CationsSumText.Text = "";
         AnionsSumText.Text = "";
         ErrorMessageText.Text = "";
-        
+
 
         StatusBorder.Background = Brush.Parse("#eff6ff");
         StatusBorder.BorderBrush = Brush.Parse("#dbeafe");
