@@ -13,6 +13,10 @@ public partial class MainWindow : Window
         InitializeComponent();
         CalculateButton.Click += OnCalculateClicked;
         ClearButton.Click += OnClearClicked;
+        
+        // Ensure window starts maximized and centered
+        WindowState = WindowState.Maximized;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
     private void OnCalculateClicked(object? sender, RoutedEventArgs e)

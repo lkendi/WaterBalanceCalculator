@@ -7,6 +7,8 @@
         x:Class="WaterBalanceCalculator.MainWindow"
         Title="Water Balance Calculator"
         WindowState="Maximized"
+        Icon="/Assets/logo.png"
+        WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI, Inter, Arial"
         Background="#f8fafc">
     <Grid Margin="24" RowDefinitions="Auto,*,Auto">
