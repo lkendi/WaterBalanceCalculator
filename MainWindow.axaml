@@ -1,9 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d"
         x:Class="WaterBalanceCalculator.MainWindow"
-        Title="WaterBalanceCalculator">
-    Welcome to Avalonia!
+        Title="Water Balance Calculator"
+        WindowState="Maximized"
+        FontFamily="Segoe UI, Inter, Arial"
+        Background="#f8fafc">
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Row="0" Margin="0,10,0,20">
+            <TextBlock Text="WATER BALANCE CALCULATOR"
+                       FontSize="30"
+                       FontWeight="SemiBold"
+                       FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
+                       Foreground="#1e40af"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,4"/>
+            <TextBlock Text="Enter your water sample values. Leave one field blank to calculate its value."
+                       FontSize="17"
+                       FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
+                       Foreground="#4b5563"
+                       HorizontalAlignment="Center"
+                       TextWrapping="Wrap"
+                       MaxWidth="800"
+                       Margin="0,0,0,8"/>
+            <Border Height="4" Background="#3b82f6" Opacity="0.7" 
+                     CornerRadius="2" Width="140" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,20,Auto,20,*">
+            <Border Grid.Column="0" 
+                     Background="White" 
+                     CornerRadius="14" 
+                     Padding="24"
+                     BorderThickness="0">
+                <Border.Styles>
+                    <Style Selector="Border">
+                        <Setter Property="BoxShadow" Value="0 6 20 0 #00000020"/>
+                    </Style>
+                </Border.Styles>
+                <StackPanel>
+                    <TextBlock Text="WATER SAMPLE PARAMETERS"
+                               FontWeight="Bold"
+                               FontSize="18"
+                               Foreground="#1e293b"
+                               Margin="0,0,0,16"
+                               HorizontalAlignment="Center"/>
+                    
+                    <Grid ColumnDefinitions="*,*" HorizontalAlignment="Stretch">
+                        <StackPanel Grid.Column="0" Spacing="12" Margin="0,0,10,0">
+                            <TextBlock Text="CATIONS" FontWeight="Bold" FontSize="16" FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" Foreground="#1e40af" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+                            
+                            <StackPanel Spacing="10">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Calcium (Ca²⁺)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="CalciumBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Magnesium (Mg²⁺)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="MagnesiumBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Sodium (Na⁺)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="SodiumBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Potassium (K⁺)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="PotassiumBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="1" Spacing="12" Margin="10,0,0,0">
+                            <TextBlock Text="ANIONS" FontWeight="Bold" FontSize="16" FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" Foreground="#1e40af" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+                            
+                            <StackPanel Spacing="10">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Chloride (Cl⁻)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="ChlorideBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Fluoride (F⁻)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="FluorideBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Nitrate (NO₃⁻)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="NitrateBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Sulfate (SO₄²⁻)" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="SulfateBox" FontSize="18" Height="46" 
+                                             Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                             TextAlignment="Center" VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <StackPanel Spacing="12" Margin="0,16,0,0">
+                        <TextBlock Text="OTHER PARAMETERS" FontWeight="Bold" FontSize="16" FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" Foreground="#1e40af" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+                        
+                        <Grid ColumnDefinitions="*,10,*">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock Text="Total Alkalinity" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                <TextBox x:Name="AlkalinityBox" FontSize="18" Height="46" 
+                                         Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                         TextAlignment="Center" VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Column="2" Spacing="6">
+                                <TextBlock Text="Conductivity" FontSize="16" Foreground="#4b5563" HorizontalAlignment="Center"/>
+                                <TextBox x:Name="ConductivityBox" FontSize="18" Height="46" 
+                                         Padding="12,0" CornerRadius="8" BorderThickness="1" BorderBrush="#e2e8f0"
+                                         TextAlignment="Center" VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,20,0,0">
+                        <Button x:Name="CalculateButton"
+                                Content="CALCULATE"
+                                Background="#3b82f6"
+                                Foreground="White"
+                                FontWeight="SemiBold"
+                                FontSize="18"
+                                Height="52"
+                                CornerRadius="10"
+                                Padding="24,0"
+                                Cursor="Hand"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                        
+                        <Button x:Name="ClearButton"
+                                Content="CLEAR ALL"
+                                Background="White"
+                                Foreground="#64748b"
+                                FontWeight="SemiBold"
+                                FontSize="18"
+                                Height="52"
+                                CornerRadius="10"
+                                Padding="24,0"
+                                BorderThickness="1"
+                                BorderBrush="#e2e8f0"
+                                Cursor="Hand"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Text="* Conductivity = Σ(Cations or Anions) x 100" 
+                               FontStyle="Italic" 
+                               FontSize="15"
+                               Foreground="#64748b"
+                               Margin="0,18,0,0"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            
+            <Border Grid.Column="2" 
+                    Background="White" 
+                    CornerRadius="14" 
+                    Padding="24"
+                    BorderThickness="0">
+                <Border.Styles>
+                    <Style Selector="Border">
+                        <Setter Property="BoxShadow" Value="0 6 20 0 #00000020"/>
+                    </Style>
+                </Border.Styles>
+                <StackPanel>
+                    <TextBlock Text="ANALYSIS RESULTS" 
+                               FontSize="18" 
+                               FontWeight="Bold" 
+                               Foreground="#1e293b" 
+                               Margin="0,0,0,16"
+                               HorizontalAlignment="Center"/>
+                    
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" 
+                          VerticalAlignment="Top">
+                        <Border x:Name="StatusBorder"
+                                Grid.Row="0"
+                                CornerRadius="8"
+                                Padding="16,12"
+                                Margin="0,0,0,12"
+                                BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <Border x:Name="StatusIndicator" Width="24" Height="24" CornerRadius="12"/>
+                                <TextBlock x:Name="StatusText" FontSize="18" FontWeight="SemiBold" 
+                                           Text="Enter values and calculate"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Grid.Row="1" VerticalAlignment="Top" Margin="0,0,0,10">
+                            <StackPanel Margin="0,0,0,10">
+                                <TextBlock Text="Solved Property" 
+                                           FontSize="16" 
+                                           Foreground="#64748b" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="SolvedPropertyText" 
+                                           FontSize="16" 
+                                           Foreground="#1e293b" 
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <StackPanel Margin="0,0,0,10">
+                                <TextBlock Text="Solved Value" 
+                                           FontSize="16" 
+                                           Foreground="#64748b" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="SolvedValueText" 
+                                           FontSize="16" 
+                                           Foreground="#1e293b" 
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+
+                            <StackPanel Margin="0,0,0,10">
+                                <TextBlock Text="Cations Sum" 
+                                           FontSize="16" 
+                                           Foreground="#64748b" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="CationsSumText" 
+                                           FontSize="16" 
+                                           Foreground="#1e293b" 
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Margin="0,0,0,10">
+                                <TextBlock Text="Anions Sum" 
+                                           FontSize="16" 
+                                           Foreground="#64748b" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="AnionsSumText" 
+                                           FontSize="16" 
+                                           Foreground="#1e293b" 
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <TextBlock Grid.Row="6"
+                                   x:Name="ErrorMessageText" 
+                                   FontSize="16" 
+                                   Foreground="#dc2626" 
+                                   Margin="0,24,0,0"
+                                   TextWrapping="Wrap"
+                                   HorizontalAlignment="Stretch"
+                                   MaxWidth="300"
+                                   TextAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            
+            <Border Grid.Column="4" 
+                    Background="White" 
+                    CornerRadius="14" 
+                    Padding="24"
+                    BorderThickness="0">
+                <Border.Styles>
+                    <Style Selector="Border">
+                        <Setter Property="BoxShadow" Value="0 6 20 0 #00000020"/>
+                    </Style>
+                </Border.Styles>
+                <StackPanel>
+                    <TextBlock Text="RECOMMENDED VALUES"
+                               FontWeight="Bold"
+                               FontSize="18"
+                               FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
+                               Foreground="#1e293b"
+                               Margin="0,0,0,16"
+                               HorizontalAlignment="Center"/>
+                    
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                          VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                        <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                                Background="#dbeafe"
+                                CornerRadius="6"
+                                Padding="12,8"
+                                Margin="0,0,0,8">
+                            <Grid ColumnDefinitions="*,*">
+                                <TextBlock Text="Parameter" FontWeight="Bold" FontSize="16" FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" Foreground="#1e40af" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Value (mg/L)" FontWeight="Bold" FontSize="16" FontFamily="Inter, SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" Foreground="#1e40af" HorizontalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        
+                        <TextBlock Grid.Row="1" Text="Calcium (Ca²⁺)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="150" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="2" Text="Magnesium (Mg²⁺)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="100" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="3" Text="Sodium (Na⁺)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="200" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="4" Text="Potassium (K⁺)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="--" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="5" Text="Chloride (Cl⁻)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="250" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="6" Text="Fluoride (F⁻)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="6" Grid.Column="1" Text="1.5" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="7" Text="Nitrate (NO₃⁻)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="7" Grid.Column="1" Text="50" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="8" Text="Sulfate (SO₄²⁻)" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="8" Grid.Column="1" Text="400" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="9" Text="Total Alkalinity" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="9" Grid.Column="1" Text="--" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                        
+                        <TextBlock Grid.Row="10" Text="Conductivity" FontSize="16" Foreground="#4b5563" Margin="8,6" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Row="10" Grid.Column="1" Text="--" FontSize="16" Foreground="#1e293b" FontWeight="SemiBold" Margin="8,6" HorizontalAlignment="Center"/>
+                    </Grid>
+                    
+                    <TextBlock Text="* Based on KEBS water standards" 
+                               FontSize="14" 
+                               Foreground="#94a3b8" 
+                               Margin="0,16,0,0" 
+                               FontStyle="Italic"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="2"
+                   Text="Water Balance Calculator v1.0 · © 2025"
+                   FontSize="15"
+                   Foreground="#94a3b8"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Bottom"
+                   Margin="0,20,0,0"/>
+    </Grid>
 </Window>
