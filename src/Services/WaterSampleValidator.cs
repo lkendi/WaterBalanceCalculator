@@ -7,29 +7,24 @@ namespace WaterBalanceCalculator.Services;
 /// Validates water sample to ensure proper calculation conditions.
 /// </summary>
 
+public enum CalculationMode
+{
+    SingleUnknown,
+    CationsOnly,
+    AnionsOnly,
+    CationsAndAnions
+}
+
+public record ValidationResult(bool IsValid, string Message, CalculationMode? Mode = null, string? UnknownProperty = null, string? SecondUnknownProperty = null);
+
 public static class WaterSampleValidator
 {
-    private static readonly string[] PropertyNames =
-    {
-        nameof(WaterSample.Calcium),
-        nameof(WaterSample.Magnesium),
-        nameof(WaterSample.Sodium),
-        nameof(WaterSample.Potassium),
-        nameof(WaterSample.Chloride),
-        nameof(WaterSample.Fluoride),
-        nameof(WaterSample.Nitrate),
-        nameof(WaterSample.Sulfate),
-        nameof(WaterSample.TotalAlkalinity),
-        nameof(WaterSample.Conductivity)
-    };
-
     public static ValidationResult ValidateForCalculation(WaterSample sample)
     {
         if (sample == null)
             return new ValidationResult(false, "Water sample cannot be null.");
 
         var values = GetSampleProperties(sample);
-
         var nullProperties = values.Where(p => p.Value == null).ToList();
         var negativeProperties = values.Where(p => p.Value < 0).ToList();
 
@@ -39,29 +34,145 @@ public static class WaterSampleValidator
             return new ValidationResult(false, $"Negative values not allowed: {negativeNames}");
         }
 
+        if (IsCationsAndAnionsMode(sample, out string? cationUnknown, out string? anionUnknown))
+        {
+            return new ValidationResult(
+                true,
+                $"Valid for cations+anions calculation",
+                CalculationMode.CationsAndAnions,
+                cationUnknown,
+                anionUnknown
+            );
+        }
+
+        if (IsCationsOnlyMode(sample, out string? cationOnlyUnknown))
+        {
+            return new ValidationResult(
+                true,
+                $"Valid for cations-only calculation",
+                CalculationMode.CationsOnly,
+                cationOnlyUnknown
+            );
+        }
+
+        if (IsAnionsOnlyMode(sample, out string? anionOnlyUnknown))
+        {
+            return new ValidationResult(
+                true,
+                $"Valid for anions-only calculation",
+                CalculationMode.AnionsOnly,
+                anionOnlyUnknown
+            );
+        }
+
+        if (nullProperties.Count == 1)
+        {
+            return new ValidationResult(
+                true,
+                $"Valid for calculation",
+                CalculationMode.SingleUnknown,
+                nullProperties[0].Name
+            );
+        }
+
+        if (nullProperties.Count == 0 && !sample.Conductivity.HasValue)
+        {
+            return new ValidationResult(
+                true,
+                $"Valid for conductivity calculation",
+                CalculationMode.SingleUnknown,
+                nameof(WaterSample.Conductivity)
+            );
+        }
+
         if (nullProperties.Count == 0)
         {
-            return new ValidationResult(false, "All values are provided. At least one value must be unknown for calculation.");
+            return new ValidationResult(false, "All values provided. Leave one blank.");
         }
 
-        if (nullProperties.Count > 1)
-        {
-            var unknownNames = string.Join(", ", nullProperties.Select(p => p.Name));
-            return new ValidationResult(false, $"Multiple unknown values found. Only one value can be unknown at a time.");
-        }
-
-        var unknownProperty = nullProperties.First().Name;
-        return new ValidationResult(true, $"Valid for calculation. Unknown property: {unknownProperty}");
+        return new ValidationResult(false, "Invalid input combination. Check guidance.");
     }
 
-    public static string? GetUnknownProperty(WaterSample sample)
+    private static bool IsCationsAndAnionsMode(WaterSample sample, out string? cationUnknown, out string? anionUnknown)
     {
-        var validationResult = ValidateForCalculation(sample);
-        if (!validationResult.IsValid)
-            return null;
+        cationUnknown = null;
+        anionUnknown = null;
 
-        var values = GetSampleProperties(sample);
-        return values.FirstOrDefault(p => p.Value == null).Name;
+        if (!sample.Conductivity.HasValue) return false;
+
+        var cations = new (string Name, double? Value)[]
+        {
+            (nameof(sample.Calcium), sample.Calcium),
+            (nameof(sample.Magnesium), sample.Magnesium),
+            (nameof(sample.Sodium), sample.Sodium),
+            (nameof(sample.Potassium), sample.Potassium)
+        };
+
+        var anions = new (string Name, double? Value)[]
+        {
+            (nameof(sample.Chloride), sample.Chloride),
+            (nameof(sample.Fluoride), sample.Fluoride),
+            (nameof(sample.Nitrate), sample.Nitrate),
+            (nameof(sample.Sulfate), sample.Sulfate),
+            (nameof(sample.TotalAlkalinity), sample.TotalAlkalinity)
+        };
+
+        var nullCations = cations.Where(c => !c.Value.HasValue).ToList();
+        var nullAnions = anions.Where(a => !a.Value.HasValue).ToList();
+
+        if (nullCations.Count != 1 || nullAnions.Count != 1) return false;
+
+        cationUnknown = nullCations[0].Name;
+        anionUnknown = nullAnions[0].Name;
+        return true;
+    }
+
+    private static bool IsCationsOnlyMode(WaterSample sample, out string? unknownProperty)
+    {
+        unknownProperty = null;
+        if (!sample.Conductivity.HasValue) return false;
+
+        var cations = new (string Name, double? Value)[]
+        {
+            (nameof(sample.Calcium), sample.Calcium),
+            (nameof(sample.Magnesium), sample.Magnesium),
+            (nameof(sample.Sodium), sample.Sodium),
+            (nameof(sample.Potassium), sample.Potassium)
+        };
+
+        var nullCations = cations.Count(c => !c.Value.HasValue);
+        if (nullCations != 1) return false;
+
+        if (sample.Chloride.HasValue || sample.Fluoride.HasValue ||
+            sample.Nitrate.HasValue || sample.Sulfate.HasValue ||
+            sample.TotalAlkalinity.HasValue) return false;
+
+        unknownProperty = cations.First(c => !c.Value.HasValue).Name;
+        return true;
+    }
+
+    private static bool IsAnionsOnlyMode(WaterSample sample, out string? unknownProperty)
+    {
+        unknownProperty = null;
+        if (!sample.Conductivity.HasValue) return false;
+
+        var anions = new (string Name, double? Value)[]
+        {
+            (nameof(sample.Chloride), sample.Chloride),
+            (nameof(sample.Fluoride), sample.Fluoride),
+            (nameof(sample.Nitrate), sample.Nitrate),
+            (nameof(sample.Sulfate), sample.Sulfate),
+            (nameof(sample.TotalAlkalinity), sample.TotalAlkalinity)
+        };
+
+        var nullAnions = anions.Count(a => !a.Value.HasValue);
+        if (nullAnions != 1) return false;
+
+        if (sample.Calcium.HasValue || sample.Magnesium.HasValue ||
+            sample.Sodium.HasValue || sample.Potassium.HasValue) return false;
+
+        unknownProperty = anions.First(a => !a.Value.HasValue).Name;
+        return true;
     }
 
     private static (string Name, double? Value)[] GetSampleProperties(WaterSample sample)
@@ -81,4 +192,3 @@ public static class WaterSampleValidator
         };
     }
 }
-public record ValidationResult(bool IsValid, string Message);

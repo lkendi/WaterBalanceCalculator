@@ -6,6 +6,8 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>Assets\logo.ico</ApplicationIcon>
+    <Win32Icon>Assets\logo.ico</Win32Icon>
   </PropertyGroup>
 
   <ItemGroup>

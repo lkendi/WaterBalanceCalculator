@@ -3,10 +3,10 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using WaterBalanceCalculator.Models;
 using WaterBalanceCalculator.Services;
-using WaterBalanceCalculator.Constants;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using WaterBalanceCalculator.Constants;
 
 namespace WaterBalanceCalculator;
 
@@ -31,28 +31,103 @@ public partial class MainWindow : Window
         InitializeComponent();
         CalculateButton.Click += OnCalculateClicked;
         ClearButton.Click += OnClearClicked;
+        CationsOnlyCheckbox.IsCheckedChanged += OnModeChanged;
+        AnionsOnlyCheckbox.IsCheckedChanged += OnModeChanged;
 
         WindowState = WindowState.Maximized;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
+    private void OnModeChanged(object? sender, RoutedEventArgs e)
+    {
+        if (sender == CationsOnlyCheckbox && CationsOnlyCheckbox.IsChecked == true)
+        {
+            AnionsOnlyCheckbox.IsChecked = false;
+        }
+        else if (sender == AnionsOnlyCheckbox && AnionsOnlyCheckbox.IsChecked == true)
+        {
+            CationsOnlyCheckbox.IsChecked = false;
+        }
+
+        UpdateModeUI();
+        ClearResultsTable();
+        StatusText.Text = "Enter values and calculate";
+        ErrorMessageText.Text = "";
+    }
+
+    private void UpdateModeUI()
+    {
+        bool cationsOnly = CationsOnlyCheckbox.IsChecked == true;
+        bool anionsOnly = AnionsOnlyCheckbox.IsChecked == true;
+
+        AnionsPanel.Opacity = cationsOnly ? 0.5 : 1.0;
+        CationsPanel.Opacity = anionsOnly ? 0.5 : 1.0;
+
+        SetPanelEnabled(AnionsPanel, !cationsOnly);
+        SetPanelEnabled(CationsPanel, !anionsOnly);
+
+        AlkalinityBox.IsEnabled = !cationsOnly;
+        AlkalinityBox.Opacity   = cationsOnly ? 0.5 : 1.0;
+
+        if (cationsOnly) ClearAnions();
+        if (anionsOnly) ClearCations();
+    }
+
+    private void SetPanelEnabled(StackPanel panel, bool enabled)
+    {
+        foreach (var child in panel.Children)
+        {
+            if (child is StackPanel innerPanel)
+            {
+                foreach (var innerChild in innerPanel.Children)
+                {
+                    if (innerChild is TextBox textBox)
+                    {
+                        textBox.IsEnabled = enabled;
+                    }
+                }
+            }
+        }
+    }
+
+    private void ClearCations()
+    {
+        CalciumBox.Text = "";
+        MagnesiumBox.Text = "";
+        SodiumBox.Text = "";
+        PotassiumBox.Text = "";
+    }
+
+    private void ClearAnions()
+    {
+        ChlorideBox.Text = "";
+        FluorideBox.Text = "";
+        NitrateBox.Text = "";
+        SulfateBox.Text = "";
+        AlkalinityBox.Text = "";
+    }
+
     private void OnCalculateClicked(object? sender, RoutedEventArgs e)
     {
         var sample = ParseInputs();
+        var result = WaterBalanceCalculatorService.Calculate(sample);
 
-        var validation = WaterSampleValidator.ValidateForCalculation(sample);
-        if (!validation.IsValid)
+        if (result.ErrorMessage != null)
         {
-            DisplayError(validation.Message);
+            DisplayError(result.ErrorMessage);
             return;
         }
-
-        var result = WaterBalanceCalculatorService.Calculate(sample);
 
         if (result.SolvedProperty != null && result.SolvedValue.HasValue)
         {
             var property = typeof(WaterSample).GetProperty(result.SolvedProperty);
             property?.SetValue(sample, result.SolvedValue);
+        }
+
+        if (result.SecondSolvedProperty != null && result.SecondSolvedValue.HasValue)
+        {
+            var property = typeof(WaterSample).GetProperty(result.SecondSolvedProperty);
+            property?.SetValue(sample, result.SecondSolvedValue);
         }
 
         DisplayResults(sample, result);
@@ -93,32 +168,32 @@ public partial class MainWindow : Window
 
     private void ClearResultsTable()
     {
-        CalciumValueText.Text = "";
-        CalciumMolesText.Text = "";
-        MagnesiumValueText.Text = "";
-        MagnesiumMolesText.Text = "";
-        SodiumValueText.Text = "";
-        SodiumMolesText.Text = "";
-        PotassiumValueText.Text = "";
-        PotassiumMolesText.Text = "";
-        ChlorideValueText.Text = "";
-        ChlorideMolesText.Text = "";
-        FluorideValueText.Text = "";
-        FluorideMolesText.Text = "";
-        NitrateValueText.Text = "";
-        NitrateMolesText.Text = "";
-        SulfateValueText.Text = "";
-        SulfateMolesText.Text = "";
-        AlkalinityValueText.Text = "";
-        AlkalinityMolesText.Text = "";
-        ConductivityValueText.Text = "";
-        ConductivityMolesText.Text = "";
-        CationsSumValueText.Text = "";
-        CationsSumMolesText.Text = "";
-        AnionsSumValueText.Text = "";
-        AnionsSumMolesText.Text = "";
+        CalciumValueText.Text = "--";
+        CalciumMolesText.Text = "--";
+        MagnesiumValueText.Text = "--";
+        MagnesiumMolesText.Text = "--";
+        SodiumValueText.Text = "--";
+        SodiumMolesText.Text = "--";
+        PotassiumValueText.Text = "--";
+        PotassiumMolesText.Text = "--";
+        ChlorideValueText.Text = "--";
+        ChlorideMolesText.Text = "--";
+        FluorideValueText.Text = "--";
+        FluorideMolesText.Text = "--";
+        NitrateValueText.Text = "--";
+        NitrateMolesText.Text = "--";
+        SulfateValueText.Text = "--";
+        SulfateMolesText.Text = "--";
+        AlkalinityValueText.Text = "--";
+        AlkalinityMolesText.Text = "--";
+        ConductivityValueText.Text = "--";
+        ConductivityMolesText.Text = "--";
+        CationsSumValueText.Text = "--";
+        CationsSumMolesText.Text = "--";
+        AnionsSumValueText.Text = "--";
+        AnionsSumMolesText.Text = "--";
 
-        HighlightSolvedParameter(null);
+        HighlightSolvedParameters(null, null);
     }
 
     private void DisplayResults(WaterSample sample, BalanceResult result)
@@ -134,7 +209,7 @@ public partial class MainWindow : Window
         UpdateParameterRow(sample.TotalAlkalinity, AlkalinityValueText, AlkalinityMolesText, ChemicalConstants.AlkalinityWeight);
         UpdateParameterRow(sample.Conductivity, ConductivityValueText, ConductivityMolesText, null);
 
-        HighlightSolvedParameter(result.SolvedProperty);
+        HighlightSolvedParameters(result.SolvedProperty, result.SecondSolvedProperty);
 
         if (result.CationsSum.HasValue)
         {
@@ -143,8 +218,8 @@ public partial class MainWindow : Window
         }
         else
         {
-            CationsSumValueText.Text = "";
-            CationsSumMolesText.Text = "";
+            CationsSumValueText.Text = "--";
+            CationsSumMolesText.Text = "--";
         }
 
         if (result.AnionsSum.HasValue)
@@ -154,8 +229,8 @@ public partial class MainWindow : Window
         }
         else
         {
-            AnionsSumValueText.Text = "";
-            AnionsSumMolesText.Text = "";
+            AnionsSumValueText.Text = "--";
+            AnionsSumMolesText.Text = "--";
         }
 
         StatusText.Text = result.Status;
@@ -178,12 +253,12 @@ public partial class MainWindow : Window
         }
         else
         {
-            valueText.Text = "";
-            molesText.Text = "";
+            valueText.Text = "--";
+            molesText.Text = "--";
         }
     }
 
-    private void HighlightSolvedParameter(string? solvedProperty)
+    private void HighlightSolvedParameters(string? solvedProperty, string? secondSolvedProperty)
     {
         for (int row = 1; row <= 10; row++)
         {
@@ -193,6 +268,11 @@ public partial class MainWindow : Window
         if (solvedProperty != null && propertyToRowIndex.TryGetValue(solvedProperty, out int rowIndex))
         {
             SetRowBold(rowIndex, true);
+        }
+
+        if (secondSolvedProperty != null && propertyToRowIndex.TryGetValue(secondSolvedProperty, out int secondRowIndex))
+        {
+            SetRowBold(secondRowIndex, true);
         }
     }
 
@@ -227,6 +307,10 @@ public partial class MainWindow : Window
         AlkalinityBox.Text = "";
         ConductivityBox.Text = "";
 
+        CationsOnlyCheckbox.IsChecked = false;
+        AnionsOnlyCheckbox.IsChecked = false;
+        UpdateModeUI();
+
         StatusText.Text = "Enter values and calculate";
         ErrorMessageText.Text = "";
         ClearResultsTable();
@@ -246,7 +330,7 @@ public partial class MainWindow : Window
             StatusIndicator.Background = Brush.Parse("#ef4444");
             StatusText.Foreground = Brush.Parse("#b91c1c");
         }
-        else if (result.Status == "Calculation Complete")
+        else if (result.Status!.StartsWith("Calculation Complete"))
         {
             StatusBorder.Background = Brush.Parse("#ecfdf5");
             StatusBorder.BorderBrush = Brush.Parse("#bbf7d0");

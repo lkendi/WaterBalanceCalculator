@@ -10,5 +10,7 @@ public record BalanceResult(
     string? Status = null,
     string? SolvedProperty = null,
     double? SolvedValue = null,
+    string? SecondSolvedProperty = null,
+    double? SecondSolvedValue = null,
     string? ErrorMessage = null
 );

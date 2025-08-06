@@ -22,34 +22,153 @@ public static class WaterBalanceCalculatorService
             );
         }
 
-        var unknownProperty = WaterSampleValidator.GetUnknownProperty(sample);
-        if (unknownProperty == null)
-        {
-            return new BalanceResult(
-                ErrorMessage: "Unable to determine unknown property",
-                Status: "Calculation Error"
-            );
-        }
-
         try
         {
-            if (unknownProperty == nameof(WaterSample.Conductivity))
+            return validation.Mode switch
             {
-                return CalculateConductivity(sample);
-            }
-
-            return CalculateIon(sample, unknownProperty);
+                CalculationMode.SingleUnknown => CalculateSingleUnknown(sample, validation.UnknownProperty),
+                CalculationMode.CationsOnly => CalculateCationsOnly(sample, validation.UnknownProperty),
+                CalculationMode.AnionsOnly => CalculateAnionsOnly(sample, validation.UnknownProperty),
+                CalculationMode.CationsAndAnions => CalculateCationsAndAnions(sample, validation.UnknownProperty, validation.SecondUnknownProperty),
+                _ => new BalanceResult(
+                    ErrorMessage: "Unsupported calculation mode",
+                    Status: "Calculation Error"
+                )
+            };
         }
         catch (Exception ex)
         {
             return new BalanceResult(
-                ErrorMessage: $"Calculation error: {ex.Message}",
+                ErrorMessage: $"Error: {ex.Message}",
                 Status: "Calculation Error"
             );
         }
     }
 
-    private static BalanceResult CalculateIon(WaterSample sample, string propertyName)
+    private static BalanceResult CalculateSingleUnknown(WaterSample sample, string? unknownProperty)
+    {
+        if (unknownProperty == nameof(WaterSample.Conductivity))
+        {
+            return CalculateConductivity(sample);
+        }
+
+        if (unknownProperty == null)
+        {
+            return new BalanceResult(
+                ErrorMessage: "Unknown property cannot be empty",
+                Status: "Invalid Input"
+            );
+        }
+        return CalculateIon(sample, unknownProperty, "Calculation Complete");
+    }
+
+    private static BalanceResult CalculateCationsOnly(WaterSample sample, string? unknownProperty)
+    {
+        double totalCationsInMeq = sample.Conductivity!.Value / ChemicalConstants.ConductivityConversionFactor;
+
+        if (unknownProperty == null)
+        {
+            return new BalanceResult(
+                ErrorMessage: "Unknown property cannot be empty",
+                Status: "Invalid Input"
+            );
+        }
+        double knownCationsSum = CalculateCationsSumWithout(sample, unknownProperty);
+        double unknownCationInMeq = totalCationsInMeq - knownCationsSum;
+        double weight = GetMolarMass(unknownProperty);
+        double value = unknownCationInMeq * weight;
+
+        if (value < 0)
+        {
+            return new BalanceResult(
+                ErrorMessage: $"Negative result for {unknownProperty}",
+                Status: "Invalid Result"
+            );
+        }
+
+        return new BalanceResult(
+            CationsSum: totalCationsInMeq,
+            AnionsSum: null,
+            Status: "Calculation Complete (Cations only)",
+            SolvedProperty: unknownProperty,
+            SolvedValue: value
+        );
+    }
+
+    private static BalanceResult CalculateAnionsOnly(WaterSample sample, string? unknownProperty)
+    {
+        double totalAnionsInMeq = sample.Conductivity!.Value / ChemicalConstants.ConductivityConversionFactor;
+
+        if (unknownProperty == null)
+        {
+            return new BalanceResult(
+                ErrorMessage: "Unknown property cannot be empty",
+                Status: "Invalid Input"
+            );
+        }
+        double knownAnionsSum = CalculateAnionsSumWithout(sample, unknownProperty);
+        double unknownAnionInMeq = totalAnionsInMeq - knownAnionsSum;
+        double weight = GetMolarMass(unknownProperty);
+        double value = unknownAnionInMeq * weight;
+
+        if (value < 0)
+        {
+            return new BalanceResult(
+                ErrorMessage: $"Negative result for {unknownProperty}",
+                Status: "Invalid Result"
+            );
+        }
+
+        return new BalanceResult(
+            CationsSum: null,
+            AnionsSum: totalAnionsInMeq,
+            Status: "Calculation Complete (Anions only)",
+            SolvedProperty: unknownProperty,
+            SolvedValue: value
+        );
+    }
+
+    private static BalanceResult CalculateCationsAndAnions(WaterSample sample, string? cationProperty, string? anionProperty)
+    {
+        double totalInMeq = sample.Conductivity!.Value / ChemicalConstants.ConductivityConversionFactor;
+        if (cationProperty == null || anionProperty == null)
+        {
+            return new BalanceResult(
+                ErrorMessage: "Unknown properties cannot be empty",
+                Status: "Invalid Input"
+            );
+        }
+
+        double knownCationsSum = CalculateCationsSumWithout(sample, cationProperty);
+        double cationWeight = GetMolarMass(cationProperty);
+        double unknownCationInMeq = totalInMeq - knownCationsSum;
+        double cationValue = unknownCationInMeq * cationWeight;
+
+        double knownAnionsSum = CalculateAnionsSumWithout(sample, anionProperty);
+        double anionWeight = GetMolarMass(anionProperty);
+        double unknownAnionInMeq = totalInMeq - knownAnionsSum;
+        double anionValue = unknownAnionInMeq * anionWeight;
+
+        if (cationValue < 0 || anionValue < 0)
+        {
+            return new BalanceResult(
+                ErrorMessage: "Negative result in calculation",
+                Status: "Invalid Result"
+            );
+        }
+
+        return new BalanceResult(
+            CationsSum: totalInMeq,
+            AnionsSum: totalInMeq,
+            Status: "Calculation Complete (Cations and anions)",
+            SolvedProperty: cationProperty,
+            SolvedValue: cationValue,
+            SecondSolvedProperty: anionProperty,
+            SecondSolvedValue: anionValue
+        );
+    }
+
+    private static BalanceResult CalculateIon(WaterSample sample, string propertyName, string status = "Calculation Complete")
     {
         double equivalentSum;
         double weight;
@@ -63,67 +182,58 @@ public static class WaterBalanceCalculatorService
                 weight = ChemicalConstants.CalciumWeight;
                 isCation = true;
                 break;
-
             case nameof(WaterSample.Magnesium):
                 equivalentSum = CalculateAnionsSum(sample);
                 equivalentSum -= CalculateCationsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.MagnesiumWeight;
                 isCation = true;
                 break;
-
             case nameof(WaterSample.Sodium):
                 equivalentSum = CalculateAnionsSum(sample);
                 equivalentSum -= CalculateCationsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.SodiumWeight;
                 isCation = true;
                 break;
-
             case nameof(WaterSample.Potassium):
                 equivalentSum = CalculateAnionsSum(sample);
                 equivalentSum -= CalculateCationsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.PotassiumWeight;
                 isCation = true;
                 break;
-
             case nameof(WaterSample.Chloride):
                 equivalentSum = CalculateCationsSum(sample);
                 equivalentSum -= CalculateAnionsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.ChlorideWeight;
                 break;
-
             case nameof(WaterSample.Fluoride):
                 equivalentSum = CalculateCationsSum(sample);
                 equivalentSum -= CalculateAnionsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.FluorideWeight;
                 break;
-
             case nameof(WaterSample.Nitrate):
                 equivalentSum = CalculateCationsSum(sample);
                 equivalentSum -= CalculateAnionsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.NitrateWeight;
                 break;
-
             case nameof(WaterSample.Sulfate):
                 equivalentSum = CalculateCationsSum(sample);
                 equivalentSum -= CalculateAnionsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.SulfateWeight;
                 break;
-
             case nameof(WaterSample.TotalAlkalinity):
                 equivalentSum = CalculateCationsSum(sample);
                 equivalentSum -= CalculateAnionsSumWithout(sample, propertyName);
                 weight = ChemicalConstants.AlkalinityWeight;
                 break;
-
             default:
-                throw new ArgumentException($"Unknown property type: {propertyName}");
+                throw new ArgumentException($"Unknown property: {propertyName}");
         }
 
         var value = equivalentSum * weight;
         if (value < 0)
         {
             return new BalanceResult(
-                ErrorMessage: $"Calculated concentration for {propertyName} is negative. Check input values.",
+                ErrorMessage: $"Negative result for {propertyName}",
                 Status: "Invalid Result"
             );
         }
@@ -139,7 +249,7 @@ public static class WaterBalanceCalculatorService
         return new BalanceResult(
             CationsSum: cationsSum,
             AnionsSum: anionsSum,
-            Status: "Calculation Complete",
+            Status: status,
             SolvedProperty: propertyName,
             SolvedValue: value
         );
@@ -164,19 +274,32 @@ public static class WaterBalanceCalculatorService
 
     private static double CalculateCationsSum(WaterSample sample)
     {
-        return (sample.Calcium!.Value / ChemicalConstants.CalciumWeight) +
-               (sample.Magnesium!.Value / ChemicalConstants.MagnesiumWeight) +
-               (sample.Sodium!.Value / ChemicalConstants.SodiumWeight) +
-               (sample.Potassium!.Value / ChemicalConstants.PotassiumWeight);
+        double sum = 0;
+        if (sample.Calcium.HasValue)
+            sum += sample.Calcium.Value / ChemicalConstants.CalciumWeight;
+        if (sample.Magnesium.HasValue)
+            sum += sample.Magnesium.Value / ChemicalConstants.MagnesiumWeight;
+        if (sample.Sodium.HasValue)
+            sum += sample.Sodium.Value / ChemicalConstants.SodiumWeight;
+        if (sample.Potassium.HasValue)
+            sum += sample.Potassium.Value / ChemicalConstants.PotassiumWeight;
+        return sum;
     }
 
     private static double CalculateAnionsSum(WaterSample sample)
     {
-        return (sample.TotalAlkalinity!.Value / ChemicalConstants.AlkalinityWeight) +
-               (sample.Chloride!.Value / ChemicalConstants.ChlorideWeight) +
-               (sample.Fluoride!.Value / ChemicalConstants.FluorideWeight) +
-               (sample.Nitrate!.Value / ChemicalConstants.NitrateWeight) +
-               (sample.Sulfate!.Value / ChemicalConstants.SulfateWeight);
+        double sum = 0;
+        if (sample.TotalAlkalinity.HasValue)
+            sum += sample.TotalAlkalinity.Value / ChemicalConstants.AlkalinityWeight;
+        if (sample.Chloride.HasValue)
+            sum += sample.Chloride.Value / ChemicalConstants.ChlorideWeight;
+        if (sample.Fluoride.HasValue)
+            sum += sample.Fluoride.Value / ChemicalConstants.FluorideWeight;
+        if (sample.Nitrate.HasValue)
+            sum += sample.Nitrate.Value / ChemicalConstants.NitrateWeight;
+        if (sample.Sulfate.HasValue)
+            sum += sample.Sulfate.Value / ChemicalConstants.SulfateWeight;
+        return sum;
     }
 
     private static double CalculateCationsSumWithout(WaterSample sample, string excludeProperty)
@@ -218,5 +341,22 @@ public static class WaterBalanceCalculatorService
             sum += sample.Sulfate.Value / ChemicalConstants.SulfateWeight;
 
         return sum;
+    }
+
+    private static double GetMolarMass(string? propertyName)
+    {
+        return propertyName switch
+        {
+            nameof(WaterSample.Calcium) => ChemicalConstants.CalciumWeight,
+            nameof(WaterSample.Magnesium) => ChemicalConstants.MagnesiumWeight,
+            nameof(WaterSample.Sodium) => ChemicalConstants.SodiumWeight,
+            nameof(WaterSample.Potassium) => ChemicalConstants.PotassiumWeight,
+            nameof(WaterSample.Chloride) => ChemicalConstants.ChlorideWeight,
+            nameof(WaterSample.Fluoride) => ChemicalConstants.FluorideWeight,
+            nameof(WaterSample.Nitrate) => ChemicalConstants.NitrateWeight,
+            nameof(WaterSample.Sulfate) => ChemicalConstants.SulfateWeight,
+            nameof(WaterSample.TotalAlkalinity) => ChemicalConstants.AlkalinityWeight,
+            _ => throw new ArgumentException($"Unknown property: {propertyName}")
+        };
     }
 }
